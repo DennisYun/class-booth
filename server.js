@@ -6,7 +6,7 @@ const WebSocket = require('ws');
 const app = express();
 const PORT = 3000;
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+// const wss = new WebSocket.Server({ server });
 const supabase = createClient(
   'https://tcupaxaimxnkbkovmowk.supabase.co',
   'sb_publishable_DVPz6bE5xBCa4x-70zUOHg_3rwZNTCI'
@@ -15,13 +15,13 @@ const supabase = createClient(
 app.use(express.static('public'));
 app.use(express.json());
 
-wss.on('connection', (ws) => {
-  // console.log('🟢 WebSocket client connected');
+// wss.on('connection', (ws) => {
+//   // console.log('🟢 WebSocket client connected');
 
-  ws.on('close', () => {
-    // console.log('🔴 WebSocket client disconnected');
-  });
-});
+//   ws.on('close', () => {
+//     // console.log('🔴 WebSocket client disconnected');
+//   });
+// });
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
@@ -44,12 +44,12 @@ app.post('/rankedit', async (req, res) => {
       },
     ]);
 
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        // console.log('sent');
-        client.send(JSON.stringify({ type: 'reload' }));
-      }
-    });
+    // wss.clients.forEach((client) => {
+    //   if (client.readyState === WebSocket.OPEN) {
+    //     // console.log('sent');
+    //     client.send(JSON.stringify({ type: 'reload' }));
+    //   }
+    // });
 
     if (error) {
       console.error(error);

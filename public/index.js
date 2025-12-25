@@ -13,7 +13,15 @@ async function fetchRanking() {
   }
 }
 
-function render() {
+async function justfetchRanking() {
+  const res = await fetch('/giveranking');
+  const json = await res.json();
+  if (json.success) {
+    rankingData = json.ranking;
+  }
+}
+
+async function render() {
   if (!rankingData) return;
 
   const list = rankingData[currentGame] || [];
@@ -34,6 +42,8 @@ function render() {
   });
 
   const totalExitTime = rankEls.length * exitDelay + exitDuration;
+
+  await justfetchRanking();
 
   /* 3️⃣ 전부 빠진 뒤 내용 교체 */
   setTimeout(() => {
@@ -78,17 +88,17 @@ setInterval(() => {
 
 fetchRanking();
 
-const ws = new WebSocket(
-  location.protocol === 'https:'
-    ? `wss://${location.host}`
-    : `ws://${location.host}`
-);
+// const ws = new WebSocket(
+//   location.protocol === 'https:'
+//     ? `wss://${location.host}`
+//     : `ws://${location.host}`
+// );
 
-ws.addEventListener('message', (event) => {
-  const msg = JSON.parse(event.data);
+// ws.addEventListener('message', (event) => {
+//   const msg = JSON.parse(event.data);
 
-  if (msg.type === 'reload') {
-    // console.log('🔄 랭킹 변경 감지 → 새로고침');
-    location.reload();
-  }
-});
+//   if (msg.type === 'reload') {
+//     // console.log('🔄 랭킹 변경 감지 → 새로고침');
+//     location.reload();
+//   }
+// });
