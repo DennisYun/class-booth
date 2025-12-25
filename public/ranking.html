@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>랭킹 입력</title>
+
+    <style>
+      @font-face {
+        font-family: 'RoundedFixedsys';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff')
+          format('woff');
+        font-weight: normal;
+        font-display: swap;
+      }
+
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: 'RoundedFixedsys';
+      }
+
+      #input_section {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      /* ===== 테이블 좌우 분할 ===== */
+
+      #tables_wrapper {
+        display: flex;
+        gap: 40px;
+      }
+
+      .game_input {
+        flex: 1;
+      }
+
+      .game_input h2 {
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      /* ===== 테이블 ===== */
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+
+      td {
+        border: 1px solid #555;
+        padding: 4px;
+      }
+
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        border: none;
+        font-family: 'RoundedFixedsys';
+        font-size: 14px;
+        padding: 4px;
+      }
+
+      input[type='number'] {
+        text-align: right;
+      }
+
+      /* ===== 버튼 ===== */
+
+      #save_btn {
+        display: block;
+        margin: 20px auto 0;
+        font-family: 'RoundedFixedsys';
+        font-size: 20px;
+        padding: 10px 40px;
+        cursor: pointer;
+        position: fixed;
+        top: 0;
+        right: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="input_section">
+      <div id="tables_wrapper">
+        <!-- 사격 게임 -->
+        <div class="game_input">
+          <h2>사격 게임 입력</h2>
+          <table id="shooting_table"></table>
+        </div>
+
+        <!-- 콩 옮기기 게임 -->
+        <div class="game_input">
+          <h2>콩 옮기기 게임 입력</h2>
+          <table id="bean_table"></table>
+        </div>
+      </div>
+
+      <button id="save_btn">저장</button>
+    </div>
+
+    <script>
+      const shootingTable = document.getElementById('shooting_table');
+      const beanTable = document.getElementById('bean_table');
+      const saveBtn = document.getElementById('save_btn');
+
+      function createTable(table, storageKey) {
+        for (let i = 0; i < 100; i++) {
+          const tr = document.createElement('tr');
+
+          const nameTd = document.createElement('td');
+          const scoreTd = document.createElement('td');
+
+          const nameInput = document.createElement('input');
+          nameInput.placeholder = '이름';
+
+          const scoreInput = document.createElement('input');
+          scoreInput.placeholder = '점수';
+          scoreInput.type = 'number';
+
+          /* 🔑 localStorage key */
+          const nameKey = `${storageKey}_name_${i}`;
+          const scoreKey = `${storageKey}_score_${i}`;
+
+          /* 🔄 복원 */
+          nameInput.value = localStorage.getItem(nameKey) || '';
+          scoreInput.value = localStorage.getItem(scoreKey) || '';
+
+          /* 💾 저장 */
+          nameInput.addEventListener('input', () => {
+            localStorage.setItem(nameKey, nameInput.value);
+          });
+
+          scoreInput.addEventListener('input', () => {
+            localStorage.setItem(scoreKey, scoreInput.value);
+          });
+
+          nameTd.appendChild(nameInput);
+          scoreTd.appendChild(scoreInput);
+
+          tr.appendChild(nameTd);
+          tr.appendChild(scoreTd);
+          table.appendChild(tr);
+        }
+      }
+
+      createTable(shootingTable, 'shooting');
+      createTable(beanTable, 'bean');
+
+      function extractTop7(table) {
+        const rows = table.querySelectorAll('tr');
+        const list = [];
+
+        rows.forEach((row) => {
+          const inputs = row.querySelectorAll('input');
+          const name = inputs[0].value.trim();
+          const score = parseInt(inputs[1].value, 10);
+
+          if (name && !isNaN(score)) {
+            list.push({ name, score });
+          }
+        });
+
+        list.sort((a, b) => b.score - a.score);
+        return list.slice(0, 8);
+      }
+
+      saveBtn.addEventListener('click', async () => {
+        const result = {
+          shooting: extractTop7(shootingTable),
+          bean: extractTop7(beanTable),
+        };
+
+        console.log('결과 JSON:', JSON.stringify(result, null, 2));
+
+        try {
+          const res = await fetch('/rankedit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(result),
+          });
+
+          const data = await res.json();
+
+          if (data.success) {
+            alert('랭킹 저장 완료!');
+          } else {
+            alert('저장 실패');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('서버 통신 오류');
+        }
+      });
+    </script>
+  </body>
+</html>
