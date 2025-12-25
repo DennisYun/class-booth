@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>랭킹 입력</title>
-
     <style>
       @font-face {
         font-family: 'RoundedFixedsys';
@@ -25,8 +24,6 @@
         margin: 0 auto;
       }
 
-      /* ===== 테이블 좌우 분할 ===== */
-
       #tables_wrapper {
         display: flex;
         gap: 40px;
@@ -40,8 +37,6 @@
         text-align: center;
         margin-bottom: 10px;
       }
-
-      /* ===== 테이블 ===== */
 
       table {
         width: 100%;
@@ -59,15 +54,13 @@
         box-sizing: border-box;
         border: none;
         font-family: 'RoundedFixedsys';
-        font-size: 14px;
+        font-size: 18px;
         padding: 4px;
       }
 
       input[type='number'] {
         text-align: right;
       }
-
-      /* ===== 버튼 ===== */
 
       #save_btn {
         display: block;
@@ -89,13 +82,30 @@
         <!-- 사격 게임 -->
         <div class="game_input">
           <h2>사격 게임 입력</h2>
-          <table id="shooting_table"></table>
+          <table id="shooting_table">
+            <thead>
+              <tr>
+                <th>이름</th>
+                <th>시간(초)</th>
+                <th>맞춘 개수</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
 
         <!-- 콩 옮기기 게임 -->
         <div class="game_input">
           <h2>콩 옮기기 게임 입력</h2>
-          <table id="bean_table"></table>
+          <table id="bean_table">
+            <thead>
+              <tr>
+                <th>이름</th>
+                <th>시간(초)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
       </div>
 
@@ -103,75 +113,78 @@
     </div>
 
     <script>
-      const shootingTable = document.getElementById('shooting_table');
-      const beanTable = document.getElementById('bean_table');
+      const shootingTbody = document.querySelector('#shooting_table tbody');
+      const beanTbody = document.querySelector('#bean_table tbody');
       const saveBtn = document.getElementById('save_btn');
 
-      function createTable(table, storageKey) {
+      function createTable(tableBody, storageKey, cols) {
         for (let i = 0; i < 100; i++) {
           const tr = document.createElement('tr');
+          for (let j = 0; j < cols; j++) {
+            const td = document.createElement('td');
+            const input = document.createElement('input');
+            // input.type = 'number';
+            input.placeholder = j === 0 ? '이름' : '0';
+            td.appendChild(input);
+            tr.appendChild(td);
 
-          const nameTd = document.createElement('td');
-          const scoreTd = document.createElement('td');
+            const key = `${storageKey}_${i}_${j}`;
+            // 초기값 로컬스토리지에서 복원
+            if (localStorage.getItem(key)) {
+              input.value = localStorage.getItem(key);
+            }
 
-          const nameInput = document.createElement('input');
-          nameInput.placeholder = '이름';
-
-          const scoreInput = document.createElement('input');
-          scoreInput.placeholder = '점수';
-          scoreInput.type = 'number';
-
-          /* 🔑 localStorage key */
-          const nameKey = `${storageKey}_name_${i}`;
-          const scoreKey = `${storageKey}_score_${i}`;
-
-          /* 🔄 복원 */
-          nameInput.value = localStorage.getItem(nameKey) || '';
-          scoreInput.value = localStorage.getItem(scoreKey) || '';
-
-          /* 💾 저장 */
-          nameInput.addEventListener('input', () => {
-            localStorage.setItem(nameKey, nameInput.value);
-          });
-
-          scoreInput.addEventListener('input', () => {
-            localStorage.setItem(scoreKey, scoreInput.value);
-          });
-
-          nameTd.appendChild(nameInput);
-          scoreTd.appendChild(scoreInput);
-
-          tr.appendChild(nameTd);
-          tr.appendChild(scoreTd);
-          table.appendChild(tr);
+            input.addEventListener('input', () => {
+              localStorage.setItem(key, input.value);
+            });
+          }
+          tableBody.appendChild(tr);
         }
       }
 
-      createTable(shootingTable, 'shooting');
-      createTable(beanTable, 'bean');
+      // 사격: 이름, 시간, 개수
+      createTable(shootingTbody, 'shooting', 3);
+      // 콩: 이름, 시간
+      createTable(beanTbody, 'bean', 2);
 
-      function extractTop7(table) {
-        const rows = table.querySelectorAll('tr');
+      function extractShootingTop() {
+        const rows = shootingTbody.querySelectorAll('tr');
         const list = [];
-
         rows.forEach((row) => {
-          const inputs = row.querySelectorAll('input');
-          const name = inputs[0].value.trim();
-          const score = parseInt(inputs[1].value, 10);
-
-          if (name && !isNaN(score)) {
-            list.push({ name, score });
+          const [nameInput, timeInput, countInput] =
+            row.querySelectorAll('input');
+          const name = nameInput.value.trim();
+          const time = parseFloat(timeInput.value);
+          const count = parseInt(countInput.value, 10);
+          if (name && !isNaN(time) && !isNaN(count)) {
+            list.push({ name, time, count });
           }
         });
+        // 개수 내림차순, 동률이면 시간 오름차순
+        list.sort((a, b) => b.count - a.count || a.time - b.time);
+        return list.slice(0, 8);
+      }
 
-        list.sort((a, b) => b.score - a.score);
+      function extractBeanTop() {
+        const rows = beanTbody.querySelectorAll('tr');
+        const list = [];
+        rows.forEach((row) => {
+          const [nameInput, timeInput] = row.querySelectorAll('input');
+          const name = nameInput.value.trim();
+          const time = parseFloat(timeInput.value);
+          if (name && !isNaN(time)) {
+            list.push({ name, time });
+          }
+        });
+        // 시간 오름차순
+        list.sort((a, b) => a.time - b.time);
         return list.slice(0, 8);
       }
 
       saveBtn.addEventListener('click', async () => {
         const result = {
-          shooting: extractTop7(shootingTable),
-          bean: extractTop7(beanTable),
+          shooting: extractShootingTop(),
+          bean: extractBeanTop(),
         };
 
         console.log('결과 JSON:', JSON.stringify(result, null, 2));
@@ -179,14 +192,11 @@
         try {
           const res = await fetch('/rankedit', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(result),
           });
 
           const data = await res.json();
-
           if (data.success) {
             alert('랭킹 저장 완료!');
           } else {

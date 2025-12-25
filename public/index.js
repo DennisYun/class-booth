@@ -62,7 +62,14 @@ async function render() {
       } else {
         el.querySelector('.rank_label').textContent = `#${i + 1}위`;
         el.querySelector('.rank_name').textContent = data.name;
-        el.querySelector('.rank_score').textContent = data.score;
+
+        if (currentGame === 'shooting') {
+          el.querySelector(
+            '.rank_score'
+          ).textContent = `${data.count}개 / ${data.time}초`;
+        } else {
+          el.querySelector('.rank_score').textContent = `${data.time}초`;
+        }
       }
     });
 
@@ -87,18 +94,3 @@ setInterval(() => {
 }, 10000);
 
 fetchRanking();
-
-// const ws = new WebSocket(
-//   location.protocol === 'https:'
-//     ? `wss://${location.host}`
-//     : `ws://${location.host}`
-// );
-
-// ws.addEventListener('message', (event) => {
-//   const msg = JSON.parse(event.data);
-
-//   if (msg.type === 'reload') {
-//     // console.log('🔄 랭킹 변경 감지 → 새로고침');
-//     location.reload();
-//   }
-// });
